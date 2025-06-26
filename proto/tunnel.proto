@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package tunnel;
+
+service TunnelService {
+    rpc Stream (stream TunnelPacket) returns (stream TunnelPacket);
+}
+
+message TunnelPacket {
+    string protocol = 1;  
+    string client_id = 2; 
+    bytes data = 3;       
+}

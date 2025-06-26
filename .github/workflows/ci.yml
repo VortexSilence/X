@@ -1,0 +1,16 @@
+---
+#TODO: later use make file
+#TODO: add build and lint later to ci not now i don't have time for lint in this state
+name: ci
+on:
+  - push
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: "go.mod"
+    - name: run test
+      run: go test ./...

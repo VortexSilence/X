@@ -1,0 +1,17 @@
+{
+  "p_mode": "tun",
+  "mode": "client",
+  "in_mode":"any",
+  "auth":"xxxxxxxxxxxxxxxxxx",
+  "port": 7000,
+  "to_port": 9000,
+  "tun_mode": "direct",
+  "type": "xless",
+  "transport": "tcp",
+  "tcpConfig": {},
+  "wsConfig": {},
+  "grpcConfig": {},
+  "pipe": "http",
+  "pipeConfig": {},
+  "ports": ["7000=8080"]
+}
