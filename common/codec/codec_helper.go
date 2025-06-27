@@ -34,7 +34,7 @@ func buildFinalMySQLLikePacket(data []byte) []byte {
 
 	// Step 1: double compression
 	snappyCompressed := snappy.Encode(nil, data)
-	lz4Compressed := compressLZ4(snappyCompressed)
+	lz4Compressed := CompressLZ4(snappyCompressed)
 
 	// Step 2: scrambling will happen inside buildChunk only
 	mask := byte(rand.Intn(256))
@@ -115,7 +115,7 @@ func decodeFinalMySQLLikePacket(packet []byte) ([]byte, error) {
 
 		if t == RealChunkType {
 			descrambled := xorBytes(data, flags)
-			snappyData, err := decompressLZ4(descrambled)
+			snappyData, err := DecompressLZ4(descrambled)
 			if err != nil {
 				return nil, fmt.Errorf("lz4 decode failed: %v", err)
 			}
@@ -150,7 +150,7 @@ func xorBytes(data []byte, mask byte) []byte {
 }
 
 // LZ4 compress
-func compressLZ4(data []byte) []byte {
+func CompressLZ4(data []byte) []byte {
 	var b bytes.Buffer
 	w := lz4.NewWriter(&b)
 	w.Write(data)
@@ -159,9 +159,17 @@ func compressLZ4(data []byte) []byte {
 }
 
 // LZ4 decompress
-func decompressLZ4(data []byte) ([]byte, error) {
+func DecompressLZ4(data []byte) ([]byte, error) {
 	r := lz4.NewReader(bytes.NewReader(data))
 	var out bytes.Buffer
 	_, err := out.ReadFrom(r)
 	return out.Bytes(), err
+}
+
+func CompressSnappy(data []byte) []byte {
+	return snappy.Encode(nil, data)
+}
+
+func DecompressSnappy(data []byte) ([]byte, error) {
+	return snappy.Decode(nil, data)
 }

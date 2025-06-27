@@ -67,6 +67,9 @@ func (t *OuTCP) sClient(clientConn net.Conn, proto string, port int) {
 				return
 			}
 			msg := append([]byte(proto+":"), buf[:n]...)
+			// start encode
+
+			// start decode
 			wrapped := pipe.HandlePipe(msg)
 			if _, err := serverConn.Write(wrapped); err != nil {
 				log.Printf("Write to server error: %v", err)
