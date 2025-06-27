@@ -1,8 +1,8 @@
 package pipe
 
 import (
-	"core/config"
-	"core/transport/http"
+	"github.com/VortexSilence/X/config"
+	"github.com/VortexSilence/X/transport/http"
 )
 
 func HandlePipe(mes []byte) []byte {

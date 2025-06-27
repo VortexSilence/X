@@ -1,6 +1,9 @@
 syntax = "proto3";
 
-package tunnel;
+package tun;
+
+option go_package = "/proto"; 
+
 
 service TunnelService {
     rpc Stream (stream TunnelPacket) returns (stream TunnelPacket);

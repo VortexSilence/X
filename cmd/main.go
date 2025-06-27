@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 
-	"core/config"
-	"core/handler"
+	"github.com/VortexSilence/X/config"
+	"github.com/VortexSilence/X/handler"
 )
 
 func main() {

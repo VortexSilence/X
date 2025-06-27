@@ -1,9 +1,10 @@
 package handler
 
 import (
-	"core/config"
-	"core/transport"
 	"net"
+
+	"github.com/VortexSilence/X/config"
+	"github.com/VortexSilence/X/transport"
 )
 
 func Handle() {

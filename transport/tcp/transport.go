@@ -2,7 +2,6 @@ package tcp
 
 import (
 	"bufio"
-	"core/transport/pipe"
 	"fmt"
 	"io"
 	"log"
@@ -10,6 +9,8 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+
+	"github.com/VortexSilence/X/transport/pipe"
 )
 
 type InTCP struct {

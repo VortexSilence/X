@@ -1,9 +1,9 @@
 package transport
 
 import (
-	"core/features/inbound"
-	"core/features/outbound"
-	"core/transport/tcp"
+	"github.com/VortexSilence/X/features/inbound"
+	"github.com/VortexSilence/X/features/outbound"
+	"github.com/VortexSilence/X/transport/tcp"
 )
 
 func NewIn() inbound.IInbound {

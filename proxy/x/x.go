@@ -1,8 +1,8 @@
 package x
 
 import (
-	"core/common/chacha20"
-	"core/common/codec"
+	"github.com/VortexSilence/X/common/chacha20"
+	"github.com/VortexSilence/X/common/codec"
 )
 
 type EX struct {
