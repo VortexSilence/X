@@ -149,7 +149,6 @@ func (t *OuTCP) sServer(tunnelConn net.Conn, port int) {
 				log.Printf("Write to tunnel error: %v", err)
 				return
 			}
-			fmt.Println("ok")
 		}
 	}()
 
