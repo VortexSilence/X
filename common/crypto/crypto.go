@@ -5,7 +5,6 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"io"
 )
@@ -31,10 +30,10 @@ func unpad(src []byte) ([]byte, error) {
 }
 
 // EncryptAES256CBC encrypts plaintext using AES-256-CBC and returns base64-encoded ciphertext.
-func EncryptAES256CBC(plaintext, key []byte) (string, error) {
+func EncryptAES256CBC(plaintext, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	plaintext = pad(plaintext, aes.BlockSize)
@@ -42,35 +41,36 @@ func EncryptAES256CBC(plaintext, key []byte) (string, error) {
 	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
 	iv := ciphertext[:aes.BlockSize]
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	mode := cipher.NewCBCEncrypter(block, iv)
 	mode.CryptBlocks(ciphertext[aes.BlockSize:], plaintext)
 
-	return base64.StdEncoding.EncodeToString(ciphertext), nil
+	return ciphertext, nil
+	// return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
 // DecryptAES256CBC decrypts base64-encoded ciphertext using AES-256-CBC.
-func DecryptAES256CBC(ciphertextBase64 string, key []byte) (string, error) {
-	ciphertext, err := base64.StdEncoding.DecodeString(ciphertextBase64)
-	if err != nil {
-		return "", err
-	}
+func DecryptAES256CBC(ciphertext, key []byte) ([]byte, error) {
+	// ciphertext, err := base64.StdEncoding.DecodeString(ciphertextBase64)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	if len(ciphertext) < aes.BlockSize {
-		return "", fmt.Errorf("ciphertext too short")
+		return nil, fmt.Errorf("ciphertext too short")
 	}
 	iv := ciphertext[:aes.BlockSize]
 	ciphertext = ciphertext[aes.BlockSize:]
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if len(ciphertext)%aes.BlockSize != 0 {
-		return "", fmt.Errorf("ciphertext is not a multiple of the block size")
+		return nil, fmt.Errorf("ciphertext is not a multiple of the block size")
 	}
 
 	mode := cipher.NewCBCDecrypter(block, iv)
@@ -78,8 +78,8 @@ func DecryptAES256CBC(ciphertextBase64 string, key []byte) (string, error) {
 
 	plaintext, err := unpad(ciphertext)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return string(plaintext), nil
+	return plaintext, nil
 }

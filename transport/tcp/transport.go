@@ -45,7 +45,7 @@ func (t *OuTCP) Send(con net.Conn, proto string, port int, mode string) {
 	}
 }
 func (t *OuTCP) sClient(clientConn net.Conn, port int) {
-	pipe := pipe.HandlePipe()
+	p := pipe.HandlePipe()
 	serverConn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
 		log.Printf("Server connection error: %v", err)
@@ -66,7 +66,8 @@ func (t *OuTCP) sClient(clientConn net.Conn, port int) {
 				return
 			}
 			// msg := append([]byte(proto+":"), buf[:n]...)
-			msg := pipe.Wrap(buf[:n], "proto")
+			s := pipe.HandlePipeEncoder(buf[:n])
+			msg := p.Wrap(s, "proto")
 			if _, err := serverConn.Write(msg); err != nil {
 				log.Printf("Write to server error: %v", err)
 				return
@@ -85,7 +86,7 @@ func (t *OuTCP) sClient(clientConn net.Conn, port int) {
 				}
 				return
 			}
-			_, decoded, err := pipe.UnwrapResponse(buf[:n])
+			_, decoded, err := p.UnwrapResponse(buf[:n])
 			if err != nil {
 				log.Printf("Decode error: %v", err)
 				return
@@ -102,7 +103,7 @@ func (t *OuTCP) sClient(clientConn net.Conn, port int) {
 }
 
 func (t *OuTCP) sServer(tunnelConn net.Conn, port int) {
-	pipe := pipe.HandlePipe()
+	p := pipe.HandlePipe()
 	defer tunnelConn.Close()
 	buf := make([]byte, 32*1024)
 	n, err := tunnelConn.Read(buf)
@@ -112,11 +113,12 @@ func (t *OuTCP) sServer(tunnelConn net.Conn, port int) {
 		}
 		return
 	}
-	protocol, realData, err := pipe.Unwrap(buf[:n])
+	protocol, realData, err := p.Unwrap(buf[:n])
 	if err != nil {
 		log.Printf("Unwrap error: %v", err)
 		return
 	}
+	realData = pipe.HandlePipeEncoder(realData)
 	fmt.Println(protocol)
 	targetConn, err := net.Dial("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
@@ -144,7 +146,7 @@ func (t *OuTCP) sServer(tunnelConn net.Conn, port int) {
 				}
 				return
 			}
-			wrappedResp := pipe.WrapResponse(buf[:n], "proto", 200)
+			wrappedResp := p.WrapResponse(buf[:n], "proto", 200)
 			if _, err := tunnelConn.Write([]byte(wrappedResp)); err != nil {
 				log.Printf("Write to tunnel error: %v", err)
 				return

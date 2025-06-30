@@ -1,1 +1,5 @@
 package header
+
+func AddFakeHeader() {
+
+}

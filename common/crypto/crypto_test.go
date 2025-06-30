@@ -9,31 +9,31 @@ func TestEncryptDecryptAES256CBC(t *testing.T) {
 	tests := []struct {
 		name      string
 		key       []byte
-		plaintext string
+		plaintext []byte
 		wantErr   bool
 	}{
 		{
 			name:      "Valid AES-256 encryption/decryption",
 			key:       []byte("thisis32bitlongpassphraseimusing"), // 32 bytes
-			plaintext: "سلام دنیا!",
+			plaintext: []byte("سلام دنیا!"),
 			wantErr:   false,
 		},
 		{
 			name:      "Empty plaintext",
 			key:       []byte("thisis32bitlongpassphraseimusing"),
-			plaintext: "",
+			plaintext: []byte(""),
 			wantErr:   false,
 		},
 		{
 			name:      "Invalid key size (too short)",
 			key:       []byte("shortkey"),
-			plaintext: "test",
+			plaintext: []byte("test"),
 			wantErr:   true,
 		},
 		{
 			name:      "Invalid key size (too long)",
 			key:       []byte("thiskeyistoolongandhasmorethan32bytes!!!"),
-			plaintext: "test",
+			plaintext: []byte("test"),
 			wantErr:   true,
 		},
 	}
@@ -53,7 +53,7 @@ func TestEncryptDecryptAES256CBC(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Decrypt error = %v", err)
 			}
-			if decrypted != tt.plaintext {
+			if string(decrypted) != string(tt.plaintext) {
 				t.Errorf("Decrypted text = %s, want = %s", decrypted, tt.plaintext)
 			}
 		})
@@ -74,7 +74,7 @@ func TestAES256CBC(t *testing.T) {
 		t.Fatalf("Decryption failed: %v", err)
 	}
 
-	if decrypted != plaintext {
+	if string(decrypted) != string(plaintext) {
 		t.Errorf("Decrypted text doesn't match. Got %s, expected %s", decrypted, plaintext)
 	}
 }
