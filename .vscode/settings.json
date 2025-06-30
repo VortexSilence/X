@@ -4,5 +4,9 @@
         "xless",
         "xtrojan",
         "zdns"
-    ]
+    ],
+    "files.associations": {
+        "*.embeddedhtml": "html",
+        "aesni256.h": "c"
+    }
 }
