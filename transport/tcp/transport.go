@@ -1,13 +1,10 @@
 package tcp
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"log"
 	"net"
-	"net/http"
-	"strings"
 	"sync"
 
 	"github.com/VortexSilence/X/transport/pipe"
@@ -42,12 +39,13 @@ func (t *InTCP) Listen(port int, h func(con net.Conn)) {
 
 func (t *OuTCP) Send(con net.Conn, proto string, port int, mode string) {
 	if mode == "client" {
-		t.sClient(con, proto, port)
+		t.sClient(con, port)
 	} else {
-		t.sServer(con, proto, port)
+		t.sServer(con, port)
 	}
 }
-func (t *OuTCP) sClient(clientConn net.Conn, proto string, port int) {
+func (t *OuTCP) sClient(clientConn net.Conn, port int) {
+	pipe := pipe.HandlePipe()
 	serverConn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
 		log.Printf("Server connection error: %v", err)
@@ -67,12 +65,9 @@ func (t *OuTCP) sClient(clientConn net.Conn, proto string, port int) {
 				}
 				return
 			}
-			msg := append([]byte(proto+":"), buf[:n]...)
-			// start encode
-
-			// start decode
-			wrapped := pipe.HandlePipe(msg)
-			if _, err := serverConn.Write(wrapped); err != nil {
+			// msg := append([]byte(proto+":"), buf[:n]...)
+			msg := pipe.Wrap(buf[:n], "proto")
+			if _, err := serverConn.Write(msg); err != nil {
 				log.Printf("Write to server error: %v", err)
 				return
 			}
@@ -81,54 +76,48 @@ func (t *OuTCP) sClient(clientConn net.Conn, proto string, port int) {
 
 	go func() {
 		defer wg.Done()
-		reader := bufio.NewReader(serverConn)
+		buf := make([]byte, 32*1024)
 		for {
-			resp, err := http.ReadResponse(reader, nil)
+			n, err := serverConn.Read(buf)
 			if err != nil {
-				log.Printf("Read HTTP response error: %v", err)
+				if err != io.EOF {
+					log.Printf("Read from server error: %v", err)
+				}
 				return
 			}
-			body, err := io.ReadAll(resp.Body)
+			_, decoded, err := pipe.UnwrapResponse(buf[:n])
 			if err != nil {
-				log.Printf("Read response body error: %v", err)
+				log.Printf("Decode error: %v", err)
 				return
 			}
-			if _, err := clientConn.Write(body); err != nil {
+			if _, err := clientConn.Write(decoded); err != nil {
 				log.Printf("Write to client error: %v", err)
 				return
 			}
+
 		}
 	}()
 
 	wg.Wait()
 }
 
-func (t *OuTCP) sServer(tunnelConn net.Conn, proto string, port int) {
+func (t *OuTCP) sServer(tunnelConn net.Conn, port int) {
+	pipe := pipe.HandlePipe()
 	defer tunnelConn.Close()
-
-	reader := bufio.NewReader(tunnelConn)
-	req, err := http.ReadRequest(reader)
+	buf := make([]byte, 32*1024)
+	n, err := tunnelConn.Read(buf)
 	if err != nil {
-		log.Printf("HTTP read error: %v", err)
+		if err != io.EOF {
+			log.Printf("Read from server error: %v", err)
+		}
 		return
 	}
-
-	payload, err := io.ReadAll(req.Body)
+	protocol, realData, err := pipe.Unwrap(buf[:n])
 	if err != nil {
-		log.Printf("Read payload error: %v", err)
+		log.Printf("Unwrap error: %v", err)
 		return
 	}
-
-	var protocol string
-	var realData []byte
-	if parts := strings.SplitN(string(payload), ":", 2); len(parts) == 2 {
-		protocol = parts[0]
-		realData = []byte(parts[1])
-	} else {
-		log.Printf("Invalid protocol prefix in payload")
-		return
-	}
-
+	fmt.Println(protocol)
 	targetConn, err := net.Dial("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		log.Printf("Target connection error: %v", err)
@@ -155,40 +144,28 @@ func (t *OuTCP) sServer(tunnelConn net.Conn, proto string, port int) {
 				}
 				return
 			}
-			response := fmt.Sprintf(
-				"HTTP/1.1 200 OK\r\n"+
-					"Host: %s\r\n"+
-					"User-Agent: %s\r\n"+
-					"Content-Type: application/octet-stream\r\n"+
-					"Content-Length: %d\r\n\r\n%s",
-				"pashmak.com", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36", n+len(protocol)+1, protocol+":"+string(buf[:n]))
-
-			if _, err := tunnelConn.Write([]byte(response)); err != nil {
+			wrappedResp := pipe.WrapResponse(buf[:n], "proto", 200)
+			if _, err := tunnelConn.Write([]byte(wrappedResp)); err != nil {
 				log.Printf("Write to tunnel error: %v", err)
 				return
 			}
+			fmt.Println("ok")
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
-		reader := bufio.NewReader(tunnelConn)
+		buf := make([]byte, 32*1024)
 		for {
-			req, err := http.ReadRequest(reader)
+			n, err := tunnelConn.Read(buf)
 			if err != nil {
 				if err != io.EOF {
-					log.Printf("HTTP read error: %v", err)
+					log.Printf("Read from tunnel error: %v", err)
 				}
 				return
 			}
 
-			payload, err := io.ReadAll(req.Body)
-			if err != nil {
-				log.Printf("Read payload error: %v", err)
-				return
-			}
-
-			if _, err := targetConn.Write(payload); err != nil {
+			if _, err := targetConn.Write(buf[:n]); err != nil {
 				log.Printf("Write to target error: %v", err)
 				return
 			}
