@@ -1,5 +1,0 @@
-package header
-
-func AddFakeHeader() {
-
-}
