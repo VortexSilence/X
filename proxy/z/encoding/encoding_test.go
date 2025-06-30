@@ -1,4 +1,4 @@
-package z
+package encoding
 
 import (
 	"bytes"

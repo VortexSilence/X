@@ -5,7 +5,7 @@ name: ci
 on:
   - push
 jobs:
-  test:
+  test-common:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -13,4 +13,24 @@ jobs:
       with:
         go-version-file: "go.mod"
     - name: run test
-      run: go test ./...
+      run: go test ./common/...
+
+  test-proxy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: "go.mod"
+    - name: run test
+      run: go test ./proxy/...
+
+  test-transport:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: "go.mod"
+    - name: run test
+      run: go test ./transport/...
