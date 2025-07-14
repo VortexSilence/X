@@ -8,13 +8,17 @@ import (
 	"net/http"
 )
 
+func NewUpgrade() *Upgrade {
+	return &Upgrade{}
+}
+
 type Upgrade struct {
 }
 
 // p - protocol name tcp udp ws quic grpc
 func (u *Upgrade) Upgrade(conn net.Conn, p string) bool {
 	fmt.Fprintf(conn,
-		"GET /tcp HTTP/1.1\r\n"+
+		"GET / HTTP/1.1\r\n"+
 			"Host: localhost\r\n"+
 			"Upgrade: %s\r\n"+
 			"Connection: Upgrade\r\n"+
@@ -26,8 +30,8 @@ func (u *Upgrade) Upgrade(conn net.Conn, p string) bool {
 // handle and hijack http request to raw tcp connection
 // TODO add ws and tcp and other protocols
 // TODO add quic support for udp HTTP/3
-func (u *Upgrade) Handle(handler func(conn net.Conn, rw *bufio.ReadWriter)) {
-	http.HandleFunc("/tcp", func(w http.ResponseWriter, r *http.Request) {
+func (u *Upgrade) Handle(port int, handler func(conn net.Conn)) {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Println("Incoming HTTP request...")
 		if r.Header.Get("Upgrade") != "tcp" {
 			http.Error(w, "Upgrade required", http.StatusUpgradeRequired)
@@ -38,7 +42,7 @@ func (u *Upgrade) Handle(handler func(conn net.Conn, rw *bufio.ReadWriter)) {
 			http.Error(w, "Hijacking not supported", http.StatusInternalServerError)
 			return
 		}
-		conn, rw, err := hijacker.Hijack()
+		conn, _, err := hijacker.Hijack()
 		if err != nil {
 			http.Error(w, "Hijack failed", http.StatusInternalServerError)
 			return
@@ -48,8 +52,8 @@ func (u *Upgrade) Handle(handler func(conn net.Conn, rw *bufio.ReadWriter)) {
 		fmt.Fprintf(conn, "Upgrade: tcp\r\n")
 		fmt.Fprintf(conn, "Connection: Upgrade\r\n\r\n")
 		//now move to tcp with hijack http :D
-		handler(conn, rw)
+		handler(conn)
 	})
-	log.Println("Listening on :8080")
-	http.ListenAndServe(":8080", nil)
+	log.Printf("Listening on :%d for HTTP upgrade...\n", port)
+	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }

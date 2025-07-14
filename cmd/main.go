@@ -12,7 +12,6 @@ func main() {
 	flag.Parse()
 	err := config.Load(*configPath)
 	if err != nil {
-
 	}
 	go handler.Handle()
 	for {

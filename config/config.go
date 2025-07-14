@@ -9,6 +9,8 @@ import (
 
 type Config struct {
 	PMode      string         `json:"p_mode"`
+	Inbounds   []Inbound      `json:"inbounds"`
+	Outbounds  []Outbound     `json:"outbounds"`
 	Mode       string         `json:"mode"`
 	Auth       string         `json:"auth"`
 	InMode     string         `json:"in_mode"`
@@ -23,6 +25,16 @@ type Config struct {
 	Pipe       string         `json:"pipe"`
 	PipeConfig map[string]any `json:"pipeConfig"`
 	Ports      []string       `json:"ports"`
+}
+
+type Inbound struct {
+	Protocol string `json:"protocol"`
+	Port     int    `json:"port"`
+}
+
+type Outbound struct {
+	Protocol string `json:"protocol"`
+	Port     int    `json:"port"`
 }
 
 var (
